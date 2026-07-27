@@ -37,8 +37,8 @@ def elements_balance(kinetic_folder, results_folders, elements_list, threshold=0
     ]
     others_colour = "silver"  # for the "Others" lumped bucket, silver so it doesn't blend into a real species gray
 
-    title_fontsize = 14
-    legend_fontsize = 9
+    title_fontsize = 18
+    legend_fontsize = 12
 
     def normalize_element(symbol):
         """'HE' / 'he' / 'He' -> 'He', so kinetics.xml's all-caps element names
@@ -193,6 +193,24 @@ def elements_balance(kinetic_folder, results_folders, elements_list, threshold=0
         ax_top.plot([0, 1], [0, 0], transform=ax_top.transAxes, **kwargs)
         ax_bottom.plot([0, 1], [1, 1], transform=ax_bottom.transAxes, **kwargs)
 
+    def draw_composition(ax, T, lumped, colors, with_labels=False):
+        """Draw the species breakdown on `ax`: a stackplot vs T when there are
+        >=2 points, or a single stacked bar when there's only one (e.g. a lone
+        Case) — a stackplot has no width to fill with just one x-value   """
+        if len(T) < 2:
+            bottom = 0.0
+            for c, color in zip(lumped.columns, colors):
+                v = lumped[c].values[0]
+                ax.bar(0, v, bottom=bottom, width=0.6, color=color, label=c if with_labels else None)
+                bottom += v
+            ax.set_xlim(-1, 1)
+            ax.set_xticks([0])
+            ax.set_xticklabels([f"{T[0]:.0f}"])
+        else:
+            stack_kwargs = {'labels': lumped.columns} if with_labels else {}
+            ax.stackplot(T, [lumped[c].values for c in lumped.columns], colors=colors, alpha=0.9, **stack_kwargs)
+
+
     def plot_element_speciation(mass_fractions, mw, species_elements, elements, threshold):
         """all plotting"""
         T = mass_fractions.index.values
@@ -249,9 +267,8 @@ def elements_balance(kinetic_folder, results_folders, elements_list, threshold=0
                                                                     O2_break_bottom_fraction), hspace=0.08)
                 ax_top = fig.add_subplot(inner[0])
                 ax_bottom = fig.add_subplot(inner[1], sharex=ax_top)
-                ax_top.stackplot(T, [lumped[c].values for c in lumped.columns], colors=colors,
-                                  labels=lumped.columns, alpha=0.9)
-                ax_bottom.stackplot(T, [lumped[c].values for c in lumped.columns], colors=colors, alpha=0.9)
+                draw_composition(ax_top, T, lumped, colors, with_labels=True) 
+                draw_composition(ax_bottom, T, lumped, colors, with_labels=False)                
                 ax_top.set_ylim(high, top * 1.02)
                 ax_bottom.set_ylim(0, low)
                 draw_break_marks(ax_top, ax_bottom)
@@ -271,20 +288,19 @@ def elements_balance(kinetic_folder, results_folders, elements_list, threshold=0
                 # stackplot draws the first column at the bottom of the stack; reverse
                 # the legend so it reads top-to-bottom in the same order as the stack
                 handles, labels = ax_top.get_legend_handles_labels()
-                ax_top.legend(handles[::-1], labels[::-1], loc='center left', bbox_to_anchor=(1.15, 0.5),
+                ax_top.legend(handles[::-1], labels[::-1], loc='center left', bbox_to_anchor=(1.08, 0.5),
                               fontsize=legend_fontsize)
                 bottom_ax = ax_bottom
             else:
                 ax = fig.add_subplot(outer[i], sharex=bottom_ax)
-                ax.stackplot(T, [lumped[c].values for c in lumped.columns], colors=colors, labels=lumped.columns,
-                             alpha=0.9)
+                draw_composition(ax, T, lumped, colors, with_labels=True)
                 total_ref = elem_dfs[el].sum(axis=1).mean()
                 add_percent_axis(ax, total_ref, label=True)
                 ax.set_ylabel(f"{el} moles")
                 ax.set_title(f"{el} speciation vs T  (species >{threshold:.0%} of {el} total)",
                              fontsize=title_fontsize, pad=10)
                 handles, labels = ax.get_legend_handles_labels()
-                ax.legend(handles[::-1], labels[::-1], loc='center left', bbox_to_anchor=(1.15, 0.5),
+                ax.legend(handles[::-1], labels[::-1], loc='center left', bbox_to_anchor=(1.08, 0.5),
                           fontsize=legend_fontsize)
                 bottom_ax = ax
 

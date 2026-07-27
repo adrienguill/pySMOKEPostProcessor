@@ -4,10 +4,10 @@ from pySMOKEPostProcessor import elements_balance
 #  - - - Elements balance analysis - - -
 # For an OpenSMOKE temperature sweep (one folder per Case), this returns one
 # subplot per element, showing which species carries that element, and how
-# much of it, across all Cases.
+# much of it, across all Cases
 #
-# All plotting utilities are built inside the post-processor function itself;
-# calling elements_balance(...) does the parsing and shows the plots directly.
+# All plotting utilities are built inside the post-processor function itself,
+# calling elements_balance(...) does the parsing and shows the plots directly
 #
 # How to use:
 #  kinetic_folder   -- folder containing the mech (kinetics.xml is read), read the
@@ -20,8 +20,8 @@ from pySMOKEPostProcessor import elements_balance
 # -------------------------------------------------------------------------------------
 
 
-kineticFolder = "/home/aguillonneau/Creck/OMEsCK"
-resultsFolder= "/home/aguillonneau/opensmoke/Wang/OME3/1/out"
+kineticFolder = "path/to/folder/"
+resultsFolder = "path/to/folder/"
 
 
 elements_balance(kineticFolder,
